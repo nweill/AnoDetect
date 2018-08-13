@@ -23,11 +23,19 @@ df_all['class'] = 1
 df_space['class'] = 0
 df_all = pd.concat([df_all, df_space], axis=0)
 # model = DecisionTreeClassifier(max_depth=4)
-model = SVC()
+model = SVC(C=0.001)
 model.fit(df_all[cols], df_all['class'])
 preds = model.predict(df_all[cols])
 df_all['preds'] = preds
+df_all['match'] = df_all['preds'] == df_all['class']
+plt.plot(df_all.loc[(df_all['preds'] == 1) & (df_all['match']), 'A'],
+         df_all.loc[(df_all['preds'] == 1) & (df_all['match']), 'B'], '.')
+plt.plot(df_all.loc[(df_all['preds'] == 0) & (df_all['match']), 'A'], df_all.loc[
+    (df_all['preds'] == 0) & (df_all['match']), 'B'], '.')
 
-plt.plot(df_all.loc[df_all['preds'] == 1, 'A'], df_all.loc[df_all['preds'] == 1, 'B'], '.')
-plt.plot(df_all.loc[df_all['preds'] == 0, 'A'], df_all.loc[df_all['preds'] == 0, 'B'], '.')
+plt.plot(df_all.loc[(df_all['preds'] == 1) & (~df_all['match']), 'A'],
+         df_all.loc[(df_all['preds'] == 1) & (~df_all['match']), 'B'], 'r.')
+plt.plot(df_all.loc[(df_all['preds'] == 0) & (~df_all['match']), 'A'], df_all.loc[
+    (df_all['preds'] == 0) & (~df_all['match']), 'B'], 'k.')
+
 plt.show()
