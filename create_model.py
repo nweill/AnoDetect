@@ -91,7 +91,7 @@ df_all = pd.concat([df_all, df_space], axis=0)
 df_train, df_test = pd_split_train_test(df_all)
 models = get_list_models()
 results = pd.DataFrame()
-plot_curve = False
+plot_curve = True
 for label, model in models:
     model.fit(df_train[cols], df_train['class'])
     df_test['preds'] = model.predict(df_test[cols])
@@ -104,11 +104,12 @@ for label, model in models:
         plot_auc(fpr, tpr, auc_score, label)
     results = pd.concat([results, pd.DataFrame({'model': [label], 'auc': [auc_score]})], axis=0)
 results.reset_index(inplace=True, drop=True)
-plot_AUCs(results)
-if plot_curve:
+if not plot_curve:
+    plot_AUCs(results)
+else:
     plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
+    plt.xlim([0, 1.0])
+    plt.ylim([0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.title('Receiver operating characteristic example')
