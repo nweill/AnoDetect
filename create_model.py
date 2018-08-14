@@ -5,7 +5,8 @@ plt.style.use('ggplot')
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve, auc
 from sklearn.svm import SVC
-# from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 
 import create_dataset as cd
@@ -48,14 +49,16 @@ def plot_auc(fpr, tpr, auc_score, label=''):
 def get_list_models():
     res = []
     res.append(('logistic Regression', LogisticRegression()))
-    for i in range(7, 10):
+    for i in range(1, 15):
         res.append(('Decision Tree md=' + str(i), DecisionTreeClassifier(max_depth=i)))
-    for i in range(-2, 2):
+    for i in range(-5, 5):
         c = 10 ** i
-        for j in range(-2, 2):
+        for j in range(-5, 5):
             g = 10 ** j
             res.append(('SVC c=' + str(c) + ' g=' + str(g), SVC(C=c, gamma=g, probability=True)))
-
+    for i in range(10, 200, 10):
+        res.append(('RF n=%d' % i, RandomForestClassifier(n_estimators=i)))
+    res.append(('NB', GaussianNB()))
     return res
 
 
@@ -88,10 +91,10 @@ df_space['class'] = 0
 
 df_all = pd.concat([df_all, df_space], axis=0)
 
-df_train, df_test = pd_split_train_test(df_all)
+df_train, df_test = pd_split_train_test(df_all, 0.3)
 models = get_list_models()
 results = pd.DataFrame()
-plot_curve = True
+plot_curve = False
 for label, model in models:
     model.fit(df_train[cols], df_train['class'])
     df_test['preds'] = model.predict(df_test[cols])
