@@ -5,9 +5,11 @@ from matplotlib import pyplot as plt
 import create_dataset as cd
 
 
-def create_space(df, cols=['A', 'B']):
+def create_space(df, cols=['A', 'B'], num_elements=None):
     res = pd.DataFrame()
-    num_elements = len(df)
+    if num_elements is None:
+        num_elements = len(df)
+
     for i, col in enumerate(cols):
         min_col = np.min(df[col])
         max_col = np.max(df[col])
