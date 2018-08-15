@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 import create_dataset as cd
 
 
-def create_space(df, cols=['A', 'B'], num_elements=None):
+def create_space(df, cols=['A', 'B'], num_elements=None, margin=0.25):
     res = pd.DataFrame()
     if num_elements is None:
         num_elements = len(df)
@@ -13,7 +13,6 @@ def create_space(df, cols=['A', 'B'], num_elements=None):
     for i, col in enumerate(cols):
         min_col = np.min(df[col])
         max_col = np.max(df[col])
-        margin = .25
         min_val = min_col - (max_col - min_col) * margin
         max_val = max_col + (max_col - min_col) * margin
         vals = np.random.uniform(min_val, max_val, num_elements)
