@@ -10,8 +10,8 @@ from sklearn.tree import DecisionTreeClassifier
 import create_dataset as cd
 import map_space as ms
 from utils import pd_split_train_test
-from sklearn.metrics import confusion_matrix
-from sklearn.svm import SVC
+from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
+from sklearn.ensemble import RandomForestClassifier
 
 
 def _get_data_classified_per_match(df_test):
@@ -41,6 +41,8 @@ def get_conf_matrix(df_test):
     TN = len(out_pred_out)
     FP = len(out_pred_in)
     FN = len(in_pred_out)
+    if TP == 0:
+        return {'TP': TP, 'TN': TN, 'FP': FP, 'FN': FN, 'Precision': 0, 'Recall': 0}
     return {'TP': TP, 'TN': TN, 'FP': FP, 'FN': FN, 'Precision': TP / (TP + FP), 'Recall': TP / (TP + FN)}
 
 
@@ -72,13 +74,14 @@ def get_list_models():
 
     for i in range(3, 12):
         res.append(('Decision Tree md=' + str(i), DecisionTreeClassifier(max_depth=i)))
-    for i in range(2, 4):
-        c = 10 ** i
-        for j in range(-1, 2):
-            g = 10 ** j
-            res.append(('SVC c=' + str(c) + ' g=' + str(g), SVC(C=c, gamma=g, probability=True)))
-    # for i in range(20, 200, 20):
-    #     res.append(('RF n=%d' % i, RandomForestClassifier(n_estimators=i)))
+        # from sklearn.svm import SVC
+    # for i in range(-3, 0):
+    #     c = 10 ** i
+    #     for j in range(-2, -1):
+    #         g = 10 ** j
+    #         res.append(('SVC c=' + str(c) + ' g=' + str(g), SVC(C=c, gamma=g, probability=True)))
+    for i in range(20, 200, 20):
+        res.append(('RF n=%d' % i, RandomForestClassifier(n_estimators=i)))
     return res
 
 
@@ -111,7 +114,7 @@ def predict_data(df, model):
 def create_dataset(get_data_func, density=2):
     df = get_data_func()
 
-    df_space = ms.create_space(df, cols=['A', 'B'], num_elements=len(df) * density, margin=0.05)
+    df_space = ms.create_space(df, cols=['A', 'B'], num_elements=int(len(df) * density), margin=0.05)
 
     cols = ['A', 'B', 'cat']
     df_all = df[cols].copy()
@@ -141,9 +144,11 @@ def run_benchmark(df_train, df_test, models, cols=['A', 'B'], output_col='class'
 
 
 if __name__ == '__main__':
-    # get_data_func = cd.create_nblobs(8, 5, 250)
-    get_data_func = cd.create_circular_data(radius=[1, 3.5, 4, 15, 6, 7, 18, 9], n_per_class=1000)
-    df_all = create_dataset(get_data_func, density=2)
+    get_data_func = cd.create_nblobs(4, 10, 500)
+    # get_data_func = cd.create_circular_data(radius=[1, 3.5, 4, 15, 6, 7, 18, 9], n_per_class=1000)
+    # get_data_func = cd.create_circular_data(radius=[1, 2, 9], n_per_class=1000)
+
+    df_all = create_dataset(get_data_func, density=1)
     plot_data(df_all)
     df_train, df_test = pd_split_train_test(df_all, 0.5)
     models = get_list_models()
@@ -158,11 +163,14 @@ if __name__ == '__main__':
     plot_predictions(df_train)
 
     plot_auc_bars(results)
-    model = DecisionTreeClassifier()
+
+    model = RandomForestClassifier()
     train_init = df_train[df_train['class'] == 1]
     test_init = df_test[df_test['class'] == 1]
     model.fit(train_init[['A', 'B']], train_init['cat'])
     test_init['preds_cat'] = model.predict(test_init[['A', 'B']])
     print(confusion_matrix(test_init['preds_cat'], test_init['cat']))
+    print(precision_recall_fscore_support(test_init['preds_cat'], test_init['cat'], average='weighted'))
     df_test_cleaned = test_init[test_init['preds'] == 1]
     print(confusion_matrix(df_test_cleaned['preds_cat'], df_test_cleaned['cat']))
+    print(precision_recall_fscore_support(df_test_cleaned['preds_cat'], df_test_cleaned['cat'], average='weighted'))
